@@ -318,11 +318,9 @@ def create_app():
 
     @app.route('/<user_public_id>/announcements/create', methods=['POST', 'OPTIONS'])
     def create_new_announcement(user_public_id):
-        # 1) CORS preflight
         if request.method == 'OPTIONS':
             return '', 200
 
-        # 2) parse JSON vs form
         if request.is_json:
             data = request.get_json()
         else:
@@ -330,7 +328,6 @@ def create_app():
 
         print(data)
 
-        # 3) basic field check
         required = [
             'price', 'mileage', 'vehicleMake', 'vehicleColor',
             'engine', 'horsePower', 'gearbox', 'vehicleYear',
@@ -389,7 +386,6 @@ def create_app():
                 session.commit()
                 session.refresh(ann)
 
-                # respond to JSON vs form
                 if request.is_json:
                     return jsonify({
                         'message': 'Announcement created',
@@ -402,7 +398,7 @@ def create_app():
             if request.is_json:
                 return jsonify({
                     'error': 'Integrity error: duplicate or invalid data',
-                    'detail': str(e.orig)  # e.orig gives the underlying DB error message
+                    'detail': str(e.orig)
                 }), 409
             else:
                 return '', 409
@@ -412,7 +408,6 @@ def create_app():
 
     @app.route('/<user_public_id>/announcements/<int:announcement_id>/update', methods=['PUT', 'OPTIONS'])
     def update_announcement(user_public_id, announcement_id):
-        # 1) Preflight
         if request.method == 'OPTIONS':
             return '', 200
 
@@ -423,25 +418,21 @@ def create_app():
 
         try:
             with SessionLocal() as session:
-                # load user
                 user = session.execute(
                     select(User).where(User.public_id == user_public_id)
                 ).scalar_one_or_none()
                 if not user:
                     return jsonify({'error': 'User not found'}), 404
 
-                # load announcement
                 ann = session.execute(
                     select(Announcement).where(Announcement.id == announcement_id)
                 ).scalar_one_or_none()
                 if not ann:
                     return jsonify({'error': 'Announcement not found'}), 404
 
-                # ensure owner
                 if ann.user_id != user.id:
                     return jsonify({'error': 'Unauthorized'}), 403
 
-                # only these three fields:
                 if 'price' in data and not data['price'] is None:
                     ann.price = data['price']
                 if 'mileage' in data and not data['mileage'] is None:
@@ -504,7 +495,6 @@ def create_app():
 
                 session.commit()
                 return Response(PIXEL_GIF, mimetype='image/gif')
-            # — POST multipart/form‑data via your React uploader —
             elif request.method == 'POST':
                 for storage in request.files.getlist('documents'):
                     filename = storage.filename
@@ -533,7 +523,6 @@ def create_app():
     return app
 
 
-# Run if directly executed
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True, use_reloader=False)
