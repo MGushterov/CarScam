@@ -504,8 +504,6 @@ def create_app():
 
                 session.commit()
                 return Response(PIXEL_GIF, mimetype='image/gif')
-
-
             # — POST multipart/form‑data via your React uploader —
             elif request.method == 'POST':
                 for storage in request.files.getlist('documents'):
